@@ -1,9 +1,4 @@
-pip install streamlit
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import yfinance as yf
-import streamlit as st
+
 
 st.set_page_config(page_title = "Stock Data Extraction", layout="wide")
 
