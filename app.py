@@ -1,7 +1,7 @@
 import streamlit as st
-import pandas as pd 
-import numpy as np
 import yfinance as yf
+import pandas as pd
+import numpy as np
 st.set_page_config(page_title = "Stock Data Extraction", layout="wide")
 
 st.title ("Stock Indicator app")
