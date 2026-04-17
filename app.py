@@ -1,3 +1,4 @@
+import streamlit as st
 st.set_page_config(page_title = "Stock Data Extraction", layout="wide")
 
 st.title ("Stock Indicator app")
