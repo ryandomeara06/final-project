@@ -132,6 +132,36 @@ if st.sidebar.button("Get Data"):
     else:
         st.warning("Not enough data to calculate RSI. Need at least 14 data points.")
 
+    st.subheader("Volatility Analysis")
+
+    VOLATILITY_PERIOD = 20
+
+    if df.shape[0] >= VOLATILITY_PERIOD:
+        df['Daily_Return'] = df['Close'].pct_change()
+        df['Rolling_Std_Dev'] = df['Daily_Return'].rolling(window=VOLATILITY_PERIOD).std()
+        df['Annualized_Volatility'] = df['Rolling_Std_Dev'] * np.sqrt(252)
+
+        st.write("**Volatility Data (last 5 rows):**")
+        st.dataframe(df[['Close', 'Daily_Return', 'Rolling_Std_Dev', 'Annualized_Volatility']].tail())
+
+        latest_volatility = df['Annualized_Volatility'].iloc[-1]
+
+        def categorize_volatility(volatility):
+            volatility_percent = volatility * 100
+            if volatility_percent > 40:
+                return 'High'
+            elif 25 <= volatility_percent <= 40:
+                return 'Medium'
+            else:
+                return 'Low'
+
+        volatility_category = categorize_volatility(latest_volatility)
+
+        st.write(f"\n**{VOLATILITY_PERIOD}-day Volatility for {ticker}:** {latest_volatility:.2%}")
+        st.write(f"**Category:** {volatility_category}")
+    else:
+        st.warning(f"Not enough data to calculate {VOLATILITY_PERIOD}-day Volatility. Need at least {VOLATILITY_PERIOD} data points.")
+
     # convert dataframe to CSV for download
     csv = df.to_csv().encode("utf-8")
 
