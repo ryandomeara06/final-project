@@ -141,9 +141,6 @@ if st.sidebar.button("Get Data"):
         df['Rolling_Std_Dev'] = df['Daily_Return'].rolling(window=VOLATILITY_PERIOD).std()
         df['Annualized_Volatility'] = df['Rolling_Std_Dev'] * np.sqrt(252)
 
-        st.write("**Volatility Data (last 5 rows):**")
-        st.dataframe(df[['Close', 'Daily_Return', 'Rolling_Std_Dev', 'Annualized_Volatility']].tail())
-
         latest_volatility = df['Annualized_Volatility'].iloc[-1]
 
         def categorize_volatility(volatility):
