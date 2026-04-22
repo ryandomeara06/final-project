@@ -116,12 +116,12 @@ if st.sidebar.button("Get Data"):
         avg_loss = losses.rolling(14).mean()
 
         # Calculate Relative Strength (RS) and RSI
-        if avg_loss == 0:
+        if avg_loss.iloc[-1] == 0: # Check the last value of the Series
             rs = 100
         else:
-            rs = avg_gain / avg_loss
+            rs = avg_gain.iloc[-1] / avg_loss.iloc[-1]
         rsi = 100 - (100 / (1 + rs))
-        print(f"RSI : {rsi:.2f}")
+        st.write(f"**RSI (14-period):** {rsi:.2f}")
 
         if rsi < 30:
             st.info("**RSI Interpretation:** Market is oversold")
