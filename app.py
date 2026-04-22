@@ -89,15 +89,46 @@ if st.sidebar.button("Get Data"):
                 st.info("**Trend:** Mixed trend")
         else:
             st.warning("Not enough data to calculate 200-day moving average.")
+st.subheader("Relative Strength Index (RSI)")
 
-        csv = df.to_csv().encode("utf-8")
+if df.shape[0] >= 14: # Ensure enough data for RSI calculation
+    # Calculate delta
+    delta = df['Close'].diff(1)
 
-        st.download_button(
-            label="Download Data as CSV",
-            data=csv,
-            file_name=f"{ticker}_stock_data.csv",
-            mime="text/csv"
-        )
+    # Calculate gains and losses
+    gains = delta.clip(lower=0)
+    losses = -delta.clip(upper=0)
+
+    # Calculate average gains and losses using rolling mean
+    avg_gain = gains.rolling(14).mean()
+    avg_loss = losses.rolling(14).mean()
+
+    # Calculate Relative Strength (RS) and RSI
+    if avg_loss.iloc[-1] == 0:
+        rs = 100 # To avoid division by zero if there are no losses
+    else:
+        rs = avg_gain.iloc[-1] / avg_loss.iloc[-1]
+
+    rsi = 100 - (100 / (1 + rs))
+
+    st.write(f"**RSI (14-period):** {rsi:.2f}")
+
+    if rsi < 30:
+        st.info("**RSI Interpretation:** Market is oversold")
+    elif rsi > 70:
+        st.error("**RSI Interpretation:** Market is overbought")
+    else:
+        st.success("**RSI Interpretation:** Market is neutral")
+else:
+    st.warning("Not enough data to calculate RSI. Need at least 14 data points.")
+
+
+ csv = df.to_csv().encode("utf-8")
+ st.download_button(
+     label="Download Data as CSV",
+     data=csv,
+     file_name=f"{ticker}_stock_data.csv",
+     mime="text/csv")
 
 # Extra analysis section
 ticker = "XOM"
