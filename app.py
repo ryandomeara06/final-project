@@ -81,6 +81,7 @@ if st.sidebar.button("Get Data"):
 
     # Trend analysis
     close_prices = df["Close"]
+    trend = "N/A"
     if len(close_prices) >= 200: # Ensure enough data for all MAs
         current_price = close_prices.iloc[-1]
         ma_20 = df["MA20"].iloc[-1]
@@ -94,15 +95,20 @@ if st.sidebar.button("Get Data"):
 
         if current_price > ma_20 and current_price > ma_50 and current_price > ma_200:
             st.success("**Trend:** Upward trend")
+            trend = "upward"
         elif current_price < ma_20 and current_price < ma_50 and current_price < ma_200:
             st.error("**Trend:** Downward trend")
+            trend = "downward"
         else:
             st.info("**Trend:** Mixed trend")
+            trend = "mixed"
     else:
         st.warning("Not enough data to calculate 200-day moving average and determine a clear trend. Need at least 200 data points.")
 
     st.subheader("Relative Strength Index (RSI)")
 
+    rsi_value = None
+    rsi_interpretation = "N/A"
     if df.shape[0] >= 14: # Ensure enough data for RSI calculation
         # Calculate delta
         delta = df['Close'].diff(1)
@@ -112,25 +118,52 @@ if st.sidebar.button("Get Data"):
         losses = -delta.clip(upper=0)
 
         # Calculate average gains and losses using rolling mean
-        avg_gain = gains.rolling(14).mean()
-        avg_loss = losses.rolling(14).mean()
+        avg_gain = gains.ewm(com=13, adjust=False).mean()
+        avg_loss = losses.ewm(com=13, adjust=False).mean()
 
         # Calculate Relative Strength (RS) and RSI
-        if avg_loss.iloc[-1] == 0: # Check the last value of the Series
-            rs = 100
+        if avg_loss.iloc[-1] == 0:
+            rs = 100 # To avoid division by zero if there are no losses
         else:
             rs = avg_gain.iloc[-1] / avg_loss.iloc[-1]
-        rsi = 100 - (100 / (1 + rs))
-        st.write(f"**RSI (14-period):** {rsi:.2f}")
 
-        if rsi < 30:
+        rsi_value = 100 - (100 / (1 + rs))
+
+        st.write(f"**RSI (14-period):** {rsi_value:.2f}")
+
+        if rsi_value < 30:
             st.info("**RSI Interpretation:** Market is oversold")
-        elif rsi > 70:
+            rsi_interpretation = "oversold"
+        elif rsi_value > 70:
             st.error("**RSI Interpretation:** Market is overbought")
+            rsi_interpretation = "overbought"
         else:
             st.success("**RSI Interpretation:** Market is neutral")
+            rsi_interpretation = "neutral"
     else:
         st.warning("Not enough data to calculate RSI. Need at least 14 data points.")
+
+    st.subheader("Trading Signal")
+    trading_signal = "No signal available"
+
+    if trend == "upward" and rsi_interpretation == "oversold":
+        trading_signal = "Strong Buy Signal"
+        st.success(f"**Trading Signal:** {trading_signal}")
+    elif trend == "upward" or rsi_interpretation == "oversold":
+        trading_signal = "Buy Signal"
+        st.success(f"**Trading Signal:** {trading_signal}")
+    elif trend == "downward" and rsi_interpretation == "overbought":
+        trading_signal = "Strong Sell Signal"
+        st.error(f"**Trading Signal:** {trading_signal}")
+    elif trend == "downward" or rsi_interpretation == "overbought":
+        trading_signal = "Sell Signal"
+        st.error(f"**Trading Signal:** {trading_signal}")
+    elif trend == "mixed" and rsi_interpretation == "neutral":
+        trading_signal = "Hold Signal"
+        st.info(f"**Trading Signal:** {trading_signal}")
+    else:
+        st.write(f"**Trading Signal:** {trading_signal}")
+
 
     st.subheader("Volatility Analysis")
 
@@ -140,6 +173,9 @@ if st.sidebar.button("Get Data"):
         df['Daily_Return'] = df['Close'].pct_change()
         df['Rolling_Std_Dev'] = df['Daily_Return'].rolling(window=VOLATILITY_PERIOD).std()
         df['Annualized_Volatility'] = df['Rolling_Std_Dev'] * np.sqrt(252)
+
+        st.write("**Volatility Data (last 5 rows):**")
+        st.dataframe(df[['Close', 'Daily_Return', 'Rolling_Std_Dev', 'Annualized_Volatility']].tail())
 
         latest_volatility = df['Annualized_Volatility'].iloc[-1]
 
